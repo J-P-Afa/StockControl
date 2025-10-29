@@ -31,12 +31,13 @@ onMounted(() => {
     :error="error"
     @retry="loadHomeData"
   >
+  <!--
     <template #actions>
       <button class="btn btn-primary" @click="handleSuccess('Ação executada', 'Operação realizada com sucesso!')">
         Testar Notificação
       </button>
     </template>
-
+    -->
     <main>
       <HomePageSuggestions />
     </main>

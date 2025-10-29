@@ -1,6 +1,6 @@
 import api from '@/types/api'
 import type { Paginated } from '@/types/api'
-import { getCurrentISODate } from '@/utils/date'
+import { getCurrentISODate, safeFormatBrazilianDateToISO } from '@/utils/date'
 
 // Simple cache implementation
 interface CacheEntry<T> {
@@ -108,6 +108,7 @@ export interface FormattedTransaction {
   totalCost: number;
   notaFiscal?: string;
   username?: string;
+  currency?: string;
 }
 
 // Interface para parâmetros de busca
@@ -118,6 +119,7 @@ export interface TransactionSearchParams {
   dateTo?: string;
   page?: number;
   notaFiscal?: string;
+  showInUSD?: boolean;
   ordering?: string;
   page_size?: number;
 }
@@ -129,6 +131,7 @@ class TransactionService {
   }
 
   async createTransacao(t: Omit<Transacao, 'idTransacao'>): Promise<Transacao> {
+    t.valorUnit = parseFloat(parseFloat(t.valorUnit).toFixed(2)).toString();
     console.log('Sending transacao payload:', t);
     
     const { data } = await api.post('/api/v1/transacoes/', t)
@@ -330,10 +333,22 @@ class TransactionService {
       queryParams.push(`page=${params.page}`);
     }
     if (params?.dateFrom) {
-      queryParams.push(`dateFrom=${encodeURIComponent(params.dateFrom)}`);
+      // Convert and validate DD/MM/YYYY to ISO format YYYY-MM-DD
+      const convertedDateFrom = safeFormatBrazilianDateToISO(params.dateFrom);
+      if (convertedDateFrom) {
+        queryParams.push(`dateFrom=${encodeURIComponent(convertedDateFrom)}`);
+      } else {
+        console.warn('Invalid dateFrom format:', params.dateFrom);
+      }
     }
     if (params?.dateTo) {
-      queryParams.push(`dateTo=${encodeURIComponent(params.dateTo)}`);
+      // Convert and validate DD/MM/YYYY to ISO format YYYY-MM-DD
+      const convertedDateTo = safeFormatBrazilianDateToISO(params.dateTo);
+      if (convertedDateTo) {
+        queryParams.push(`dateTo=${encodeURIComponent(convertedDateTo)}`);
+      } else {
+        console.warn('Invalid dateTo format:', params.dateTo);
+      }
     }
     if (params?.notaFiscal) {
       queryParams.push(`notaFiscal=${encodeURIComponent(params.notaFiscal)}`);
@@ -343,6 +358,9 @@ class TransactionService {
     }
     if (params?.description) {
       queryParams.push(`description=${encodeURIComponent(params.description)}`);
+    }
+    if (params?.showInUSD !== undefined) {
+      queryParams.push(`showInUSD=${params.showInUSD}`);
     }
     if (params?.ordering) {
       queryParams.push(`ordering=${encodeURIComponent(params.ordering)}`);
@@ -480,9 +498,8 @@ class TransactionService {
         if (transaction.notaFiscal) {
           updateData.codNf = transaction.notaFiscal;
         }
-        if (transaction.supplierId) {
-          updateData.supplierId = transaction.supplierId;
-        }
+        // Note: supplierId não está disponível na interface FormattedTransaction
+        // Se necessário, adicionar à interface ou obter de outra forma
       }
 
       // Usar o novo endpoint do backend que faz toda a validação e recálculo

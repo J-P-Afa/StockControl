@@ -5,14 +5,14 @@
     :error="error"
     @retry="loadTransactions"
   >
-    <template #actions>
+    <!--<template #actions>
       <LoadingButton
         variant="primary"
         @click="openNewTransactionModal"
       >
         Nova Transação
       </LoadingButton>
-    </template>
+    </template>-->
 
     <div class="transactions-content">
       <!-- Filtros -->
@@ -34,6 +34,7 @@
     </div>
 
     <!-- Modal de Edição -->
+    <!--
     <div v-if="showEditTransactionModal" class="modal-backdrop" @click="closeEditModal">
       <div class="modal form-container" @click.stop>
         <div class="modal-header">
@@ -52,8 +53,11 @@
         />
       </div>
     </div>
+    -->
 
+    
     <!-- Modal de Nova Transação -->
+    <!--
     <div v-if="showNewTransactionModal" class="modal-backdrop" @click="closeNewModal">
       <div class="modal form-container" @click.stop>
         <div class="modal-header">
@@ -70,6 +74,7 @@
         />
       </div>
     </div>
+    -->
   </PageContainer>
 </template>
   
@@ -77,7 +82,7 @@
 import { ref, watch } from 'vue';
 import TransactionsFilters from '@/components/TransactionsFilters.vue';
 import TransactionsList from '@/components/TransactionsList.vue';
-import TransactionForm from '@/components/TransactionForm.vue';
+import TransactionFormImproved from '@/components/TransactionFormImproved.vue';
 import PageContainer from '@/components/PageContainer.vue';
 import LoadingButton from '@/components/LoadingButton.vue';
 import { usePageState } from '@/composables/usePageState';
@@ -96,6 +101,7 @@ interface TransactionFilters {
   itemSKU: string;
   itemDescription: string;
   notaFiscal: string;
+  showInUSD: boolean;
 }
 
 // Inicializar com a data de hoje
@@ -107,7 +113,8 @@ const filters = ref<TransactionFilters>({
   transactionsDateTo: today,
   itemSKU: '',
   itemDescription: '',
-  notaFiscal: ''
+  notaFiscal: '',
+  showInUSD: false
 });
 
 // Chave reativa para forçar reload
@@ -210,7 +217,7 @@ async function onDeleteTransaction(transaction: any) {
 
 .filters-section,
 .transactions-section {
-  background: white;
+  /*background: white;*/
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 24px;
@@ -221,7 +228,7 @@ async function onDeleteTransaction(transaction: any) {
   margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .modal-backdrop {
@@ -239,7 +246,7 @@ async function onDeleteTransaction(transaction: any) {
 }
 
 .modal {
-  background: white;
+  /*background: white;*/
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-width: 800px;
@@ -261,7 +268,7 @@ async function onDeleteTransaction(transaction: any) {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .modal-close {
@@ -270,13 +277,13 @@ async function onDeleteTransaction(transaction: any) {
   cursor: pointer;
   padding: 8px;
   border-radius: 6px;
-  color: #6b7280;
+  /*color: #6b7280;*/
   transition: all 0.2s ease;
 }
 
 .modal-close:hover {
-  background: #f3f4f6;
-  color: #374151;
+  /*background: #f3f4f6;*/
+  /*color: #374151;*/
 }
 
 .close-icon {

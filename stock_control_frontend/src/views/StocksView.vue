@@ -60,12 +60,12 @@ function updateFilters(newFilters: typeof stockFilters.value) {
 .stocks-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 10px;
 }
 
 .filters-section,
 .stocks-section {
-  background: white;
+  /*background: var(--color-dark-bg);*/
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 24px;
@@ -76,7 +76,7 @@ function updateFilters(newFilters: typeof stockFilters.value) {
   margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 @media (max-width: 768px) {

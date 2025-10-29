@@ -34,8 +34,12 @@ USER appuser
 # Create directories for logs and media
 RUN mkdir -p /app/logs /app/media
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Set Django settings module
+ENV DJANGO_SETTINGS_MODULE=stock_control_backend.settings
+ENV PYTHONPATH=/app:/app/stock_control_backend
+
+# Create static files directory
+RUN mkdir -p /app/staticfiles
 
 # Expose port
 EXPOSE 8000

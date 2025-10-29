@@ -17,14 +17,6 @@ const api: AxiosInstance = axios.create({
     },
 });
 
-api.interceptors.response.use(
-    (response) => {
-      response.data = toCamelCase(response.data);
-      return response;
-    },
-    // … seu tratamento de erros
-  );
-
 // Request interceptor: adiciona Authorization header
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('access_token');
@@ -34,32 +26,44 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Response interceptor: trata 401 e tenta refresh
+// Response interceptor: converte snake_case para camelCase e trata erros
 api.interceptors.response.use(
-    (response: AxiosResponse) => response,
+    (response: AxiosResponse) => {
+        // Converte snake_case para camelCase
+        if (response.data) {
+            response.data = toCamelCase(response.data);
+        }
+        return response;
+    },
     async (error: AxiosError) => {
         const originalRequest = error.config as RetryableRequest;
 
+        // Evita tentar refresh/logout quando o 401 vier dos próprios endpoints de auth
+        const url = (originalRequest?.url || '').toString();
+        const isAuthEndpoint = url.includes('/api/token/') || url.includes('/api/token/refresh/');
+        if (error.response?.status === 401 && isAuthEndpoint) {
+            return Promise.reject(error);
+        }
+
         // Se 401 e ainda não tentou refresh
-        if (
-            error.response?.status === 401 &&
-            !originalRequest._retry
-        ) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             try {
                 // Tenta renovar o access token
                 const newToken = await authService.refreshToken();
+                
                 // Atualiza header default e do request original
                 axios.defaults.headers.common.Authorization = `Bearer ${newToken}`;
                 if (originalRequest.headers) {
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 }
+                
                 // Reenvia a requisição original
                 return api(originalRequest);
             } catch (refreshError) {
-                // Se refresh falhar, desloga e redireciona ao login
+                // Se refresh falhar, apenas desloga e rejeita a promessa
+                // O componente de login já lida com a navegação
                 authService.logout();
-                window.location.href = '/login';
                 return Promise.reject(refreshError);
             }
         }

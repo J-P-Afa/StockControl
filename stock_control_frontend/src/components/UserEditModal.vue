@@ -242,7 +242,7 @@ const handleBackdropClick = () => {
 }
 
 .modal {
-  background: white;
+  /* background: white; */
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-width: 500px;
@@ -264,7 +264,7 @@ const handleBackdropClick = () => {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .modal-close {

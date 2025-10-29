@@ -2,7 +2,7 @@
   <PageContainer
     title="Custos do Estoque"
     :global-loading="loading"
-    :error="error"
+    :error="error || undefined"
     @retry="loadStockCosts"
   >
     <div class="stock-costs-content">
@@ -38,6 +38,7 @@ interface StockFilters {
   itemDescription: string;
   showOnlyStockItems: boolean;
   showOnlyActiveItems: boolean;
+  showInUSD: boolean;
 }
 
 const filters = ref<StockFilters>({
@@ -46,6 +47,7 @@ const filters = ref<StockFilters>({
   itemDescription: '',
   showOnlyStockItems: false,
   showOnlyActiveItems: true,
+  showInUSD: false,
 });
 
 // chave reativa para forçar reload da lista
@@ -76,10 +78,10 @@ function onSearch() {
 
 .filters-section,
 .costs-section {
-  background: white;
+  /* background: white; */
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 24px;
+  padding: 20px;
 }
 
 .filters-section h3,
@@ -87,7 +89,7 @@ function onSearch() {
   margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 @media (max-width: 768px) {

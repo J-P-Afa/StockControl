@@ -122,3 +122,9 @@ import { useErrorHandler } from '@/composables/useApiError'
   }
   </script>
   
+<style scoped>
+.items-view {
+  margin-left: 7%;
+  width: 90%;
+}
+</style>

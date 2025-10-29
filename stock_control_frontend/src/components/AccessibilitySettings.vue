@@ -57,6 +57,7 @@
       </div>
 
       <!-- Redução de Movimento -->
+       <!--
       <div class="setting-group">
         <label class="setting-label">
           <span class="label-text">Redução de Movimento</span>
@@ -78,6 +79,7 @@
           </span>
         </button>
       </div>
+      -->
 
       <!-- Botão de Reset -->
       <div class="setting-group">
@@ -155,7 +157,6 @@ const {
 
 .label-text {
   font-weight: 600;
-  color: var(--color-heading);
   font-size: var(--accessibility-font-size);
 }
 
@@ -183,6 +184,7 @@ const {
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
+  color: var(--color-heading);
 }
 
 .font-size-option:hover {
@@ -218,6 +220,7 @@ const {
   cursor: pointer;
   transition: all 0.2s ease;
   max-width: 200px;
+  color: var(--color-heading);
 }
 
 .toggle-button:hover {

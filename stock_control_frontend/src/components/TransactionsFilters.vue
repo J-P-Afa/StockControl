@@ -8,7 +8,7 @@ import { ref, watch, onMounted } from 'vue'
 import type { FilterField } from '@/types/filter'
 import BaseFilterForm from './BaseFilterForm.vue'
 import type { TransactionSearchParams } from '@/services/transactionService'
-import { getCurrentBrazilianDate, formatBrazilianDateToISO } from '@/utils/date'
+import { getCurrentBrazilianDate, safeFormatBrazilianDateToISO } from '@/utils/date'
 
 // Interface for the filter form
 interface TransactionFilters {
@@ -17,6 +17,7 @@ interface TransactionFilters {
     itemSKU: string;
     itemDescription: string;
     notaFiscal: string;
+    showInUSD: boolean;
 }
 
 // Define emits for communication with parent component
@@ -34,7 +35,8 @@ const filters = ref<TransactionFilters>({
     transactionsDateTo: today,
     itemSKU: '',
     itemDescription: '',
-    notaFiscal: ''
+    notaFiscal: '',
+    showInUSD: false
 });
 
 // Form fields
@@ -43,7 +45,8 @@ const fields: FilterField<TransactionFilters>[] = [
     { key: 'transactionsDateTo', label: 'Data final:', type: 'date' },
     { key: 'notaFiscal', label: 'Número NF:', type: 'text' },
     { key: 'itemSKU', label: 'SKU do produto:', type: 'text' },
-    { key: 'itemDescription', label: 'Descrição do produto:', type: 'text' }
+    { key: 'itemDescription', label: 'Descrição do produto:', type: 'text' },
+    { key: 'showInUSD', label: 'Exibir valores em USD', type: 'checkbox' }
 ];
 
 // When the user clicks search
@@ -52,13 +55,27 @@ function onSearch() {
     console.log('TransactionsFilters: Current filters:', filters.value);
     
     try {
-        // Convert Brazilian dates to ISO format before sending
+        // Convert and validate Brazilian dates to ISO format before sending
         const convertedFilters = { ...filters.value };
-        if (convertedFilters.transactionsDateFrom && convertedFilters.transactionsDateFrom.includes('/')) {
-            convertedFilters.transactionsDateFrom = formatBrazilianDateToISO(convertedFilters.transactionsDateFrom);
+        
+        if (convertedFilters.transactionsDateFrom) {
+            const convertedFrom = safeFormatBrazilianDateToISO(convertedFilters.transactionsDateFrom);
+            if (convertedFrom) {
+                convertedFilters.transactionsDateFrom = convertedFrom;
+            } else {
+                console.warn('Invalid dateFrom format:', convertedFilters.transactionsDateFrom);
+                return; // Don't proceed with invalid date
+            }
         }
-        if (convertedFilters.transactionsDateTo && convertedFilters.transactionsDateTo.includes('/')) {
-            convertedFilters.transactionsDateTo = formatBrazilianDateToISO(convertedFilters.transactionsDateTo);
+        
+        if (convertedFilters.transactionsDateTo) {
+            const convertedTo = safeFormatBrazilianDateToISO(convertedFilters.transactionsDateTo);
+            if (convertedTo) {
+                convertedFilters.transactionsDateTo = convertedTo;
+            } else {
+                console.warn('Invalid dateTo format:', convertedFilters.transactionsDateTo);
+                return; // Don't proceed with invalid date
+            }
         }
         
         // First update the model

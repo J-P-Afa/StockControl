@@ -1,6 +1,6 @@
 <!-- PageContainer.vue - Container de página com loading e estados -->
 <template>
-  <div class="page-container">
+  <div class="page-container" :class="{ 'menu-expanded': isExpanded }">
     <!-- Loading overlay global -->
     <div v-if="globalLoading" class="page-loading-overlay">
       <LoadingSpinner size="large" :message="loadingMessage" />
@@ -55,6 +55,7 @@
 <script setup lang="ts">
 import LoadingSpinner from './LoadingSpinner.vue';
 import LoadingButton from './LoadingButton.vue';
+import { useSideMenu } from '@/composables/useSideMenu';
 
 interface Props {
   title?: string;
@@ -77,13 +78,23 @@ withDefaults(defineProps<Props>(), {
   empty: false,
   retryable: true,
 });
+
+// Usar o estado do menu
+const { isExpanded } = useSideMenu();
 </script>
 
 <style scoped>
 .page-container {
   min-height: 100vh;
-  background: #f9fafb;
+  background: var(--color-dark-bg);
   position: relative;
+  margin-left: 60px; /* Espaço para o SideMenu contraído */
+  transition: margin-left 0.3s ease;
+}
+
+/* Classe para quando o menu está expandido */
+.page-container.menu-expanded {
+  margin-left: 250px;
 }
 
 .page-loading-overlay {
@@ -92,7 +103,7 @@ withDefaults(defineProps<Props>(), {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+  /*background: rgba(255, 255, 255, 0.9);*/
   backdrop-filter: blur(2px);
   z-index: 1000;
   display: flex;
@@ -101,14 +112,13 @@ withDefaults(defineProps<Props>(), {
 }
 
 .page-header {
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--color-dark-bg);
+  border-bottom: 1px solid var(--color-gray-500);
   padding: 24px;
 }
 
 .page-header__content {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -123,7 +133,7 @@ withDefaults(defineProps<Props>(), {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-white);
 }
 
 .page-header__actions {
@@ -133,9 +143,9 @@ withDefaults(defineProps<Props>(), {
 }
 
 .page-content {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   padding: 24px;
+  box-sizing: border-box;
 }
 
 .page-error,
@@ -164,25 +174,33 @@ withDefaults(defineProps<Props>(), {
   margin: 0 0 8px 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-white);
 }
 
 .error-card p,
 .empty-card p {
   margin: 0 0 24px 0;
-  color: #6b7280;
+  color: var(--color-gray-400);
   line-height: 1.5;
 }
 
 .page-body {
-  background: white;
+  background: var(--color-dark-bg);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  padding: 24px;
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
+  .page-container {
+    margin-left: 50px; /* Ajusta para o SideMenu menor */
+  }
+  
+  .page-container.menu-expanded {
+    margin-left: 200px; /* Ajusta para o SideMenu expandido menor */
+  }
+  
   .page-header {
     padding: 16px;
   }
@@ -201,8 +219,18 @@ withDefaults(defineProps<Props>(), {
     padding: 16px;
   }
   
-  .page-title {
-    font-size: 20px;
+  .page-title {    
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    margin-left: 0; /* Remove margin em telas muito pequenas */
+  }
+  
+  .page-container.menu-expanded {
+    margin-left: 0; /* Remove margin mesmo quando expandido */
   }
 }
 </style>

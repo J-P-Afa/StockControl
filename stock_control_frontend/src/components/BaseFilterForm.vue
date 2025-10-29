@@ -1,5 +1,5 @@
 <template>
-    <div class="filter-form">
+    <div :class="filterFormClass">
       <div 
         v-for="field in fields" 
         :key="String(field.key)" 
@@ -8,13 +8,14 @@
         <label :for="String(field.key)">{{ field.label }}</label>
   
         <!-- checkbox -->
-        <input
-          v-if="field.type === 'checkbox'"
-          :id="String(field.key)"
-          type="checkbox"
-          v-model="localFilters[String(field.key)]"
-          class="checkbox-group"
-        />
+        <div v-if="field.type === 'checkbox'" class="checkbox-group">
+          <input
+            :id="String(field.key)"
+            type="checkbox"
+            v-model="localFilters[String(field.key)]"
+          />
+          <label :for="String(field.key)"></label>
+        </div>
   
         <!-- campo de data brasileiro -->
         <BrazilianDateInput
@@ -41,7 +42,7 @@
   </template>
   
   <script setup lang="ts">
-  import { reactive, toRefs, watch, onMounted } from 'vue';
+  import { reactive, toRefs, watch, onMounted, computed } from 'vue';
   import type { FilterField } from '@/types/filter';
   import BrazilianDateInput from './BrazilianDateInput.vue';
   
@@ -58,6 +59,11 @@
     (e: 'update:modelValue', value: Record<string, any>): void;
     (e: 'search', value: Record<string, any>): void;
   }>();
+  
+  // Computed class for filter form based on number of fields
+  const filterFormClass = computed(() => {
+    return props.fields.length > 4 ? 'filter-form filter-form--many-fields' : 'filter-form';
+  });
   
   // cria cópia reativa dos filtros
   const localFilters = reactive({ ...props.modelValue });

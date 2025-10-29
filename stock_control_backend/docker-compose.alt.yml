@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Changed from 5432 to 5433 to avoid conflicts
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -34,7 +34,7 @@ services:
     command: >
       sh -c "python manage.py collectstatic --noinput &&
              python manage.py migrate &&
-             gunicorn stock_control_backend.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+             gunicorn --chdir /app stock_control_backend.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -62,7 +62,7 @@ services:
   frontend:
     build:
       context: ../stock_control_frontend
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile.simple
     ports:
       - "3000:80"
     healthcheck:
@@ -125,4 +125,3 @@ volumes:
   redis_data:
   static_volume:
   media_volume:
-

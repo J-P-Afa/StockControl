@@ -283,15 +283,15 @@ function getSuggestionLabel(suggestion: any): string {
 
 <style scoped>
 .form-field {
-  margin-bottom: 16px;
+  margin-bottom: 5px;
 }
 
 .form-field__label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  /*color: #374151;*/
 }
 
 .form-field__label--required::after {
@@ -307,7 +307,7 @@ function getSuggestionLabel(suggestion: any): string {
 
 .form-field__input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 5px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
@@ -352,7 +352,7 @@ function getSuggestionLabel(suggestion: any): string {
   border-radius: 6px;
   font-size: 14px;
   transition: all 0.2s ease;
-  background: white;
+  /*background: white;*/
   cursor: pointer;
 }
 
@@ -414,7 +414,7 @@ function getSuggestionLabel(suggestion: any): string {
 .form-field__help {
   margin-top: 4px;
   font-size: 12px;
-  color: #6b7280;
+  /*color: #6b7280;*/
 }
 
 .form-field__error {
@@ -440,7 +440,7 @@ function getSuggestionLabel(suggestion: any): string {
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
+  background: var(--color-background);
   border: 1px solid #d1d5db;
   border-radius: 6px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -451,7 +451,7 @@ function getSuggestionLabel(suggestion: any): string {
 }
 
 .form-field__suggestion-item {
-  padding: 12px;
+  padding: 5px;
   cursor: pointer;
   border-bottom: 1px solid #f3f4f6;
   transition: background-color 0.2s ease;
@@ -459,7 +459,7 @@ function getSuggestionLabel(suggestion: any): string {
 
 .form-field__suggestion-item:hover,
 .form-field__suggestion-item--active {
-  background: #f9fafb;
+  background: #3b82f6;
 }
 
 .form-field__suggestion-item:last-child {

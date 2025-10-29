@@ -1,9 +1,11 @@
 from datetime import datetime
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from decimal import Decimal
 
 from .models import Item
 from .services import StockService
+from .currency_service import CurrencyService
 
 
 class StockCostViewSet(viewsets.ViewSet):
@@ -33,9 +35,20 @@ class StockCostViewSet(viewsets.ViewSet):
         description_filter = request.query_params.get('description', '')
         has_stock = request.query_params.get('hasStock', '') == 'true'
         active_only = request.query_params.get('active', '') == 'true'
+        show_in_usd = request.query_params.get('showInUSD', '') == 'true'
         
         # Get ordering parameters
         ordering = request.query_params.get('ordering', '')
+        
+        # Get USD conversion rate if needed
+        usd_rate = None
+        if show_in_usd:
+            usd_rate = CurrencyService.get_usd_rate(stock_date)
+            if usd_rate is None:
+                return Response(
+                    {"error": "Não foi possível obter a cotação do dólar para a data especificada"},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
         
         # Query items with filters
         items_query = Item.objects.all()
@@ -64,16 +77,35 @@ class StockCostViewSet(viewsets.ViewSet):
             custo_ultima_entrada = StockService.get_last_entry_cost(item, stock_date)
             total_cost = custo_medio * estoque_atual
             
-            item_data = {
-                'sku': item.cod_sku,
-                'description': item.descricao_item,
-                'quantity': float(estoque_atual),
-                'unityMeasure': item.unid_medida,
-                'unitCost': float(custo_medio),
-                'totalCost': float(total_cost),
-                'active': item.active,
-                'lastEntryCost': float(custo_ultima_entrada) if custo_ultima_entrada else None
-            }
+            # Convert to USD if requested
+            if show_in_usd and usd_rate:
+                custo_medio_usd = CurrencyService.convert_brl_to_usd(Decimal(str(custo_medio)), stock_date)
+                total_cost_usd = CurrencyService.convert_brl_to_usd(Decimal(str(total_cost)), stock_date)
+                custo_ultima_entrada_usd = CurrencyService.convert_brl_to_usd(Decimal(str(custo_ultima_entrada)), stock_date) if custo_ultima_entrada else None
+                
+                item_data = {
+                    'sku': item.cod_sku,
+                    'description': item.descricao_item,
+                    'quantity': float(estoque_atual),
+                    'unityMeasure': item.unid_medida,
+                    'unitCost': float(custo_medio_usd) if custo_medio_usd else float(custo_medio),
+                    'totalCost': float(total_cost_usd) if total_cost_usd else float(total_cost),
+                    'active': item.active,
+                    'lastEntryCost': float(custo_ultima_entrada_usd) if custo_ultima_entrada_usd else None,
+                    'currency': 'USD'
+                }
+            else:
+                item_data = {
+                    'sku': item.cod_sku,
+                    'description': item.descricao_item,
+                    'quantity': float(estoque_atual),
+                    'unityMeasure': item.unid_medida,
+                    'unitCost': float(custo_medio),
+                    'totalCost': float(total_cost),
+                    'active': item.active,
+                    'lastEntryCost': float(custo_ultima_entrada) if custo_ultima_entrada else None,
+                    'currency': 'BRL'
+                }
             
             result.append(item_data)
         

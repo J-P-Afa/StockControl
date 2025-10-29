@@ -118,7 +118,7 @@ const loadAboutData = async () => {
   margin: 0 0 12px 0;
   font-size: 28px;
   font-weight: 700;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .about-subtitle {
@@ -135,7 +135,7 @@ const loadAboutData = async () => {
   margin: 0 0 24px 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .features-grid {
@@ -166,7 +166,7 @@ const loadAboutData = async () => {
   margin: 0 0 8px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .feature-item p {
@@ -185,7 +185,7 @@ const loadAboutData = async () => {
   margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .info-grid {
@@ -203,7 +203,7 @@ const loadAboutData = async () => {
 }
 
 .info-item strong {
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 @media (max-width: 768px) {

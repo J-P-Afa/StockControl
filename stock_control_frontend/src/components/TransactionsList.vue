@@ -9,6 +9,15 @@
         </div>
         <div v-else-if="transactions.length === 0" class="empty-state">
             <p>Nenhuma transação encontrada.</p>
+            <div class="empty-state-suggestions">
+                <p><strong>Sugestões:</strong></p>
+                <ul>
+                    <li>Verifique se as datas estão corretas</li>
+                    <li>Tente ampliar o intervalo de datas</li>
+                    <li>Remova alguns filtros para ver mais resultados</li>
+                    <li>Verifique se há transações cadastradas no sistema</li>
+                </ul>
+            </div>
         </div>
         <BaseTable 
             v-else
@@ -37,15 +46,15 @@
                 {{ formatDecimal(value) }}
             </template>
 
-            <template #cell-cost="{ value }">
-                {{ formatCurrency(value) }}
+            <template #cell-cost="{ value, row }">
+                {{ formatCurrency(value, row.currency || 'BRL') }}
             </template>
 
-            <template #cell-edit="{ row }">
+            <!--<template #cell-edit="{ row }">
                 <button class="btn-edit table-btn" @click="onEdit(row)">
                     Editar
                 </button>
-            </template>
+            </template>-->
             <template #cell-delete="{ row }">
                 <button class="btn-delete table-btn" @click="onDelete(row)">
                     Deletar
@@ -97,7 +106,8 @@ interface Transaction {
     transactionType: string;
     notaFiscal?: string; // Optional - only for entries
     username: string;
-    edit: string; // Placeholder for edit button column
+    currency?: string;
+    // edit: string; // Placeholder for edit button column
     delete: string; // Placeholder for delete button column
 }
 
@@ -108,6 +118,7 @@ interface TransactionFilters {
   itemSKU: string;
   itemDescription: string;
   notaFiscal: string;
+  showInUSD: boolean;
 }
 
 // Props to receive filters from parent component
@@ -125,7 +136,8 @@ const serviceParams = computed<TransactionSearchParams>(() => {
         dateTo: props.filters.transactionsDateTo || undefined,
         sku: props.filters.itemSKU === '' ? undefined : props.filters.itemSKU,
         description: props.filters.itemDescription === '' ? undefined : props.filters.itemDescription,
-        notaFiscal: props.filters.notaFiscal === '' ? undefined : props.filters.notaFiscal
+        notaFiscal: props.filters.notaFiscal === '' ? undefined : props.filters.notaFiscal,
+        showInUSD: props.filters.showInUSD
     };
     
     console.log('TransactionsList: Computed serviceParams:', params);
@@ -168,7 +180,7 @@ async function fetchTransactions() {
             ...serviceParams.value,
             page: parseInt(queryParams.page),
             ordering: queryParams.ordering,
-            page_size: queryParams.page_size
+            page_size: parseInt(queryParams.page_size)
         };
         
         // Use converted params for the API call
@@ -191,7 +203,8 @@ async function fetchTransactions() {
             transactionType: item.transactionType === 'entrada' ? 'Entrada' : 'Saída',
             notaFiscal: item.notaFiscal,
             username: item.username || 'N/A',
-            edit: '', // Placeholder for edit button
+            currency: item.currency || 'BRL',
+            // edit: '', // Placeholder for edit button
             delete: '', // Placeholder for delete button
         }));
         
@@ -259,8 +272,8 @@ const columns: ExtendedColumnDef<Transaction>[] = [
         label: 'Cronologia', 
         sortable: true,
         sortFn: (a, b, order) => {
-            const timeA = parseInteger(a.cronology.toString());
-            const timeB = parseInteger(b.cronology.toString());
+            const timeA = parseInteger(a.cronology.toString()) || 0;
+            const timeB = parseInteger(b.cronology.toString()) || 0;
             return order === 'asc' ? timeA - timeB : timeB - timeA;
         }
     },
@@ -275,8 +288,8 @@ const columns: ExtendedColumnDef<Transaction>[] = [
         label: 'Data',
         sortable: true,
         sortFn: (a, b, order) => {
-            const timeA = parseBrazilianDate(a.date);
-            const timeB = parseBrazilianDate(b.date);
+            const timeA = parseBrazilianDate(a.date) || 0;
+            const timeB = parseBrazilianDate(b.date) || 0;
             return order === 'asc' ? timeA - timeB : timeB - timeA;
         }
     },
@@ -290,8 +303,8 @@ const columns: ExtendedColumnDef<Transaction>[] = [
         label: 'Número NF',
         sortable: true,
         sortFn: (a, b, order) => {
-            const timeA = parseInteger(a.notaFiscal);
-            const timeB = parseInteger(b.notaFiscal);
+            const timeA = parseInteger(a.notaFiscal || '0') || 0;
+            const timeB = parseInteger(b.notaFiscal || '0') || 0;
             return order === 'asc' ? timeA - timeB : timeB - timeA;
         }
     },
@@ -312,13 +325,13 @@ const columns: ExtendedColumnDef<Transaction>[] = [
         label: 'Custo da transação', 
         sortable: true,
         sortFn: (a, b, order) => {
-            const timeA = parseFloat(a.cost);
-            const timeB = parseFloat(b.cost);
+            const timeA = parseFloat(a.cost.toString());
+            const timeB = parseFloat(b.cost.toString());
             return order === 'asc' ? timeA - timeB : timeB - timeA;
         }
     },
     { key: 'username', label: 'Usuário', sortable: true },
-    { key: 'edit', label: 'Editar', sortable: false },
+    // { key: 'edit', label: 'Editar', sortable: false },
     { key: 'delete', label: 'Deletar', sortable: false }
 ];
 
@@ -339,7 +352,7 @@ function onEdit(transaction: Transaction) {
         ...transaction,
         transactionType: transaction.transactionType === 'Entrada' ? 'entrada' : 'saida',
         // Garantir que unitCost seja corretamente definido
-        unitCost: transaction.unitCost || (transaction.cost !== undefined && transaction.quantity ? transaction.cost / transaction.quantity : undefined)
+        unitCost: transaction.unitCost || (transaction.cost !== undefined && transaction.quantity ? transaction.cost / transaction.quantity : 0)
     };
     
     console.log('Formatted transaction for edit:', formattedTransaction);
@@ -350,3 +363,30 @@ function onDelete(transaction: Transaction) {
     emit('delete', transaction);
 }
 </script>
+
+<style scoped>
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.empty-state-suggestions {
+    margin-top: 1rem;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.empty-state-suggestions ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.empty-state-suggestions li {
+    margin-bottom: 0.25rem;
+    color: #4b5563;
+}
+</style>

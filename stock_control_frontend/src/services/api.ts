@@ -44,6 +44,13 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as RetryableRequest;
 
+        // Evita tentar refresh/logout quando o 401 vier dos próprios endpoints de auth
+        const url = (originalRequest?.url || '').toString();
+        const isAuthEndpoint = url.includes('/api/token/') || url.includes('/api/token/refresh/');
+        if (error.response?.status === 401 && isAuthEndpoint) {
+            return Promise.reject(error);
+        }
+
         // Trata erro 401 (não autorizado)
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
@@ -60,9 +67,10 @@ api.interceptors.response.use(
                 // Reenvia a requisição original
                 return api(originalRequest);
             } catch (refreshError) {
-                // Se refresh falhar, desloga e redireciona
+                // Se refresh falhar, desloga e rejeita a promessa
                 authService.logout();
-                window.location.href = '/login';
+                // Remove o redirecionamento forçado para evitar recarregamento da página
+                // O componente de login já lida com a navegação
                 return Promise.reject(refreshError);
             }
         }

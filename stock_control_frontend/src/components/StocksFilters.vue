@@ -49,8 +49,8 @@
     { key: 'stockDate',             label: 'Estoque do dia:',                     type: 'date' },
     { key: 'itemSKU',               label: 'SKU do produto:',                     type: 'text'},
     { key: 'itemDescription',       label: 'Descrição do produto:',               type: 'text'},
-    { key: 'showOnlyStockItems',    label: 'Exibir apenas itens com estoque',     type: 'checkbox'},
-    { key: 'showOnlyActiveItems',   label: 'Exibir apenas itens ativos',          type: 'checkbox'},
+    { key: 'showOnlyStockItems',    label: 'Apenas itens com estoque:',     type: 'checkbox'},
+    { key: 'showOnlyActiveItems',   label: 'Apenas itens ativos:',          type: 'checkbox'},
   ];
   
   // dispara busca

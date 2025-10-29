@@ -1,8 +1,9 @@
 // formatador de moeda
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
+function formatCurrency(value: number, currency: 'BRL' | 'USD' = 'BRL'): string {
+    const locale = currency === 'USD' ? 'en-US' : 'pt-BR';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'BRL'
+      currency: currency
     }).format(value);
 }
 

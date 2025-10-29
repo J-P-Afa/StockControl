@@ -203,7 +203,7 @@ async function onDeleteSupplier(supplier: Fornecedor) {
 
 .filters-section,
 .suppliers-section {
-  background: white;
+  /* background: white; */
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 24px;
@@ -214,7 +214,7 @@ async function onDeleteSupplier(supplier: Fornecedor) {
   margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .modal-backdrop {
@@ -232,7 +232,7 @@ async function onDeleteSupplier(supplier: Fornecedor) {
 }
 
 .modal {
-  background: white;
+  /* background: white; */
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-width: 500px;
@@ -254,7 +254,7 @@ async function onDeleteSupplier(supplier: Fornecedor) {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
 }
 
 .modal-close {

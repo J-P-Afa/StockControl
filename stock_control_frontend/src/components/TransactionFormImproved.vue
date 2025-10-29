@@ -507,7 +507,7 @@ onMounted(() => {
 }
 
 .form {
-  background: white;
+  /*background: white;*/
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 24px;
@@ -520,7 +520,7 @@ onMounted(() => {
 
 .form-header h3 {
   margin: 0;
-  color: #1f2937;
+  /*color: #1f2937;*/
   font-size: 20px;
   font-weight: 600;
 }
@@ -534,11 +534,11 @@ onMounted(() => {
 
 .total-display {
   padding: 12px;
-  background: #f3f4f6;
+  /*background: #f3f4f6;*/
   border-radius: 6px;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  /*color: #1f2937;*/
   text-align: center;
 }
 
@@ -571,7 +571,7 @@ onMounted(() => {
   gap: 8px;
   margin-top: 8px;
   padding: 12px;
-  background: #f0f9ff;
+  /*background: #f0f9ff;*/
   border: 1px solid #bae6fd;
   border-radius: 6px;
   font-size: 14px;

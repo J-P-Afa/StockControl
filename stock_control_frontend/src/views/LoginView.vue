@@ -1,8 +1,14 @@
 <!-- LoginView.vue -->
 <template>
     <div class="login-container">
-        <form @submit.prevent="onSubmit" class="login-form">
+        <form @submit.prevent.stop class="login-form">
             <h1>Login</h1>
+            
+            <!-- Mensagem de erro -->
+            <div v-if="errorMessage" class="error-message">
+                {{ errorMessage }}
+            </div>
+            
             <div class="form-group">
                 <label for="username">Usuário</label>
                 <input
@@ -11,6 +17,8 @@
                     v-model="username"
                     required
                     autocomplete="username"
+                    :class="{ 'input-error': errorMessage }"
+                    @input="clearError"
                 />
             </div>
             <div class="form-group">
@@ -21,13 +29,17 @@
                     v-model="password"
                     required
                     autocomplete="current-password"
+                    :class="{ 'input-error': errorMessage }"
+                    @input="clearError"
                 />
             </div>
             <LoadingButton 
-                type="submit" 
+                type="button"
                 :loading="loading"
                 variant="primary"
                 size="large"
+                class="login-button"
+                @click="onSubmit"
             >
                 Entrar
             </LoadingButton>
@@ -49,11 +61,17 @@ const { handleError, handleSuccess } = useErrorHandler()
 const username = ref('')
 const password = ref('')
 const loading = ref(false)
+const errorMessage = ref('')
+
+function clearError() {
+    errorMessage.value = ''
+}
 
 async function onSubmit() {
     try {
         console.log('LoginView: Iniciando login')
         loading.value = true
+        errorMessage.value = ''
         
         await authStore.login({ username: username.value, password: password.value })
         console.log('LoginView: Login bem sucedido')
@@ -64,7 +82,21 @@ async function onSubmit() {
         router.push('/')
     } catch (err: any) {
         console.error('LoginView: Erro no login:', err)
-        handleError(err, 'Erro no login')
+        
+        // Define mensagem de erro amigável
+        if (err.response && err.response.status === 401) {
+            errorMessage.value = 'Usuário ou senha inválidos. Por favor, tente novamente.'
+        } else if (err.message && err.message.includes('Network Error')) {
+            errorMessage.value = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.'
+        } else {
+            errorMessage.value = 'Ocorreu um erro ao tentar fazer login. Por favor, tente novamente.'
+        }
+        
+        // Limpa o campo de senha
+        password.value = ''
+        
+        // Mantém o foco no campo de senha
+        document.getElementById('password')?.focus()
     } finally {
         loading.value = false
     }
@@ -126,9 +158,33 @@ button:disabled {
     cursor: not-allowed;
 }
 
-.error {
-    color: #dc3545;
-    margin-top: 1rem;
-    text-align: center;
+.error-message {
+    background-color: #fee2e2;
+    color: #dc2626;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1.25rem;
+    border-left: 4px solid #dc2626;
+    font-size: 0.875rem;
+}
+
+.input-error {
+    border-color: #f87171 !important;
+    box-shadow: 0 0 0 1px #f87171;
+}
+
+.login-button {
+    margin-top: 0.5rem;
+}
+
+/* Animações */
+.error-message {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
 }
 </style>

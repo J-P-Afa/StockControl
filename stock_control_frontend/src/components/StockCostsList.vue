@@ -17,13 +17,13 @@
         </template>
         
         <!-- Formatação para valor unitário -->
-        <template #cell-unitCost="{ value }">
-          {{ formatCurrency(value) }}
+        <template #cell-unitCost="{ value, row }">
+          {{ formatCurrency(value, row.currency || 'BRL') }}
         </template>
         
         <!-- Formatação para valor total -->
-        <template #cell-totalCost="{ value }">
-          {{ formatCurrency(value) }}
+        <template #cell-totalCost="{ value, row }">
+          {{ formatCurrency(value, row.currency || 'BRL') }}
         </template>
       </BaseTable>
       <div v-else class="loading">Carregando custos de estoque...</div>
@@ -54,6 +54,7 @@
       itemDescription: string;
       showOnlyStockItems: boolean;
       showOnlyActiveItems: boolean;
+      showInUSD: boolean;
     }
     refreshKey?: number
   }>();
@@ -100,6 +101,10 @@
       
       if (props.filters.showOnlyActiveItems) {
         serviceFilters.active = true;
+      }
+      
+      if (props.filters.showInUSD) {
+        serviceFilters.showInUSD = true;
       }
       
       // Adicionar parâmetros de paginação e ordenação

@@ -15,6 +15,7 @@ interface StockFilters {
     itemDescription: string;
     showOnlyStockItems: boolean;
     showOnlyActiveItems: boolean;
+    showInUSD: boolean;
 }
 
 const filters = ref<StockFilters>({
@@ -23,6 +24,7 @@ const filters = ref<StockFilters>({
     itemDescription: '',
     showOnlyStockItems: true,
     showOnlyActiveItems: true,
+    showInUSD: false,
 });
 
 // Inicializa a data atual no carregamento do componente
@@ -37,6 +39,7 @@ const fields: FilterField<StockFilters>[] = [
     { key: 'itemDescription', label: 'Descrição do produto:', type: 'text' },
     { key: 'showOnlyStockItems', label: 'Exibir apenas itens com estoque', type: 'checkbox' },
     { key: 'showOnlyActiveItems', label: 'Exibir apenas itens ativos', type: 'checkbox' },
+    { key: 'showInUSD', label: 'Exibir valores em USD', type: 'checkbox' },
 ];
 
 const emit = defineEmits<{

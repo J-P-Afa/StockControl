@@ -1,9 +1,9 @@
 <template>
-    <div class="side-menu">
-        <button @click="toggleMenu" class="menu-button">
-            <span>{{ isMenuOpen ? '✖' : '☰' }}</span>
+    <div class="side-menu" :class="{ 'expanded': isExpanded }">
+        <button @click="toggleExpansion" class="menu-button">
+            <span>{{ isExpanded ? '◀' : '☰' }}</span>
         </button>
-        <div v-if="isMenuOpen" class="menu-content">
+        <div class="menu-content">
             <ul>
                 <!-- Home sempre visível -->
                 <MenuItem class="menu-item" to="/" label="Home" v-if="hasPermission('home')" />
@@ -21,7 +21,7 @@
             <div class="accessibility-section">
                 <button @click="toggleAccessibilityModal" class="accessibility-button" title="Configurações de Acessibilidade">
                     <span class="accessibility-icon">♿</span>
-                    <span class="accessibility-label">Acessibilidade</span>
+                    <span class="accessibility-label" v-if="isExpanded">Acessibilidade</span>
                 </button>
             </div>
         </div>
@@ -47,15 +47,12 @@
 import { ref, defineComponent, h, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useSideMenu } from '@/composables/useSideMenu'
 import AccessibilitySettings from './AccessibilitySettings.vue'
 
 const authStore = useAuthStore()
-const isMenuOpen = ref(false)
+const { isExpanded, toggleExpansion } = useSideMenu()
 const showAccessibilityModal = ref(false)
-
-const toggleMenu = () => {
-    isMenuOpen.value = !isMenuOpen.value
-}
 
 const toggleAccessibilityModal = () => {
     showAccessibilityModal.value = !showAccessibilityModal.value
@@ -87,6 +84,7 @@ interface MenuItemProps {
     to: string;
     label: string;
     onClick?: () => void;
+    class?: string;
 }
 
 const MenuItem = defineComponent({
@@ -124,13 +122,20 @@ const MenuItem = defineComponent({
     position: fixed;
     top: 0;
     left: 0;
-    height: 100%;
+    width: 60px;
+    height: 100vh;
     background-color: #333;
     color: white;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     z-index: 1000;
+    overflow-y: auto;
+    transition: width 0.3s ease;
+}
+
+.side-menu.expanded {
+    width: 250px;
 }
 
 .menu-button {
@@ -155,11 +160,27 @@ const MenuItem = defineComponent({
 
 .menu-content {
     margin-top: 20px;
+    width: 100%;
+    padding: 0 10px;
+    overflow: hidden;
+}
+
+.side-menu:not(.expanded) .menu-content {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.side-menu.expanded .menu-content {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .menu-content ul {
     list-style-type: none;
     padding: 0;
+    margin: 0;
 }
 
 .menu-content li {
@@ -169,21 +190,23 @@ const MenuItem = defineComponent({
 .menu-content a {
     color: white;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
 }
 
 .menu-content a:hover {
-    text-decoration: underline;
-}
-
-.menu-content a.active:hover {
-    color: #00f;
+    background-color: #555;
     text-decoration: none;
 }
 
 .menu-content a.active {
     font-weight: bold;
     color: #ff0;
-    text-decoration: underline;
+    background-color: #555;
+    text-decoration: none;
 }
 
 /* Accessibility Section */
@@ -191,6 +214,18 @@ const MenuItem = defineComponent({
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid #555;
+}
+
+.side-menu:not(.expanded) .accessibility-section {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.side-menu.expanded .accessibility-section {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .accessibility-button {
@@ -206,6 +241,11 @@ const MenuItem = defineComponent({
     transition: background-color 0.3s;
     width: 100%;
     font-size: 14px;
+}
+
+.side-menu:not(.expanded) .accessibility-button {
+    padding: 10px;
+    justify-content: center;
 }
 
 .accessibility-button:hover {
@@ -284,6 +324,46 @@ const MenuItem = defineComponent({
 
 .high-contrast .close-button:hover {
     background-color: #f0f0f0 !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .side-menu {
+        width: 50px;
+    }
+    
+    .side-menu.expanded {
+        width: 200px;
+    }
+    
+    .menu-button {
+        padding: 8px;
+        font-size: 16px;
+    }
+    
+    .menu-content {
+        margin-top: 10px;
+        padding: 0 5px;
+    }
+    
+    .menu-content li {
+        margin: 5px 0;
+    }
+    
+    .menu-content a {
+        padding: 6px 8px;
+        font-size: 14px;
+    }
+    
+    .accessibility-section {
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+    
+    .accessibility-button {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
 }
 
 </style>

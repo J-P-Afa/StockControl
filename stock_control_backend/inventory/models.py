@@ -2,9 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from decimal import Decimal
-from django.db.models import Sum, F
-from django.db.models.functions import Coalesce
 
 
 class Transacao(models.Model):
@@ -114,77 +111,6 @@ class Item(models.Model):
     def __str__(self):
         return f"{self.cod_sku} - {self.descricao_item}"
 
-    def get_stock_quantity(self, date=None):
-        """
-        Calcula a quantidade em estoque para uma data específica.
-        
-        Args:
-            date: Data para calcular o estoque (padrão: hoje)
-            
-        Returns:
-            Decimal: Quantidade em estoque
-        """
-        from datetime import date as date_class
-        if date is None:
-            date = date_class.today()
-            
-        # Calcular entradas até a data
-        entradas = Transacao.objects.filter(
-            cod_sku=self,
-            entradas__data_entrada__lte=date
-        ).aggregate(
-            total=Coalesce(Sum('quantidade'), Decimal(0))
-        )['total']
-        
-        # Calcular saídas até a data
-        saidas = Transacao.objects.filter(
-            cod_sku=self,
-            saidas__data_saida__lte=date
-        ).aggregate(
-            total=Coalesce(Sum('quantidade'), Decimal(0))
-        )['total']
-        
-        return entradas - saidas
-
-    def get_average_cost(self, date=None):
-        """
-        Calcula o custo médio do item em uma data específica.
-        
-        Args:
-            date: Data para calcular o custo (padrão: hoje)
-            
-        Returns:
-            Decimal: Custo médio do item
-        """
-        from datetime import date as date_class
-        if date is None:
-            date = date_class.today()
-            
-        # Calcular valor total das entradas
-        entradas_valor = Transacao.objects.filter(
-            cod_sku=self,
-            entradas__data_entrada__lte=date
-        ).aggregate(
-            total=Coalesce(Sum(F('quantidade') * F('valor_unit')), Decimal(0))
-        )['total']
-        
-        # Calcular valor total das saídas
-        saidas_valor = Transacao.objects.filter(
-            cod_sku=self,
-            saidas__data_saida__lte=date
-        ).aggregate(
-            total=Coalesce(Sum(F('quantidade') * F('valor_unit')), Decimal(0))
-        )['total']
-        
-        # Calcular quantidade em estoque
-        estoque_atual = self.get_stock_quantity(date)
-        
-        if estoque_atual > 0:
-            valor_estoque = entradas_valor - saidas_valor
-            return valor_estoque / estoque_atual
-        
-        return Decimal(0)
-
 
 class Usuario(models.Model):
     """
@@ -250,17 +176,6 @@ def create_usuario(sender, instance, created, **kwargs):
             nome_usuario=instance.get_full_name() or instance.username,
             auth_user=instance
         )
-
-# Signal to save Usuario when User is updated
-# @receiver(post_save, sender=User)
-# def save_usuario(sender, instance, **kwargs):
-#     """
-#     Update the Usuario instance when User is updated
-#     """
-#     if hasattr(instance, 'inventory_user') and instance.inventory_user:
-#         usuario = instance.inventory_user
-#         usuario.nome_usuario = instance.get_full_name() or instance.username
-#         usuario.save()
 
 
 class Fornecedor(models.Model):

@@ -124,6 +124,28 @@ body {
   --color-heading: #000000;
   --color-border: #000000;
   --color-border-hover: #333333;
+  
+  /* Override custom color variables for high contrast */
+  --color-primary: #000000;
+  --color-primary-hover: #333333;
+  --color-secondary: #000000;
+  --color-success: #000000;
+  --color-danger: #000000;
+  --color-warning: #000000;
+  --color-info: #000000;
+  --color-light: #ffffff;
+  --color-dark: #000000;
+  --color-dark-bg: #ffffff;
+  --color-white: #000000;
+  --color-gray-100: #ffffff;
+  --color-gray-200: #f0f0f0;
+  --color-gray-300: #e0e0e0;
+  --color-gray-400: #000000;
+  --color-gray-500: #000000;
+  --color-gray-600: #000000;
+  --color-gray-700: #000000;
+  --color-gray-800: #000000;
+  --color-gray-900: #000000;
 }
 
 .high-contrast button {

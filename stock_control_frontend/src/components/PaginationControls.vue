@@ -148,7 +148,7 @@ const visiblePages = computed(() => {
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--color-background);
   border-radius: 8px;
   margin-top: 1rem;
 }
@@ -167,8 +167,8 @@ const visiblePages = computed(() => {
 .pagination-btn {
   padding: 0.5rem 0.75rem;
   border: 1px solid #dee2e6;
-  background: white;
-  color: #495057;
+  background: var(--color-background);
+  color: var(--color-text);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.875rem;
@@ -178,8 +178,8 @@ const visiblePages = computed(() => {
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #e9ecef;
-  border-color: #adb5bd;
+  background: var(--color-background-hover);
+  border-color: var(--color-border-hover);
 }
 
 .pagination-btn:disabled {

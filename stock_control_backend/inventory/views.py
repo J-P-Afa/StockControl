@@ -10,6 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
 from .models import Transacao, Item, Entrada, Saida, Fornecedor, Usuario, User
+from .constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from .serializers import (
     TransacaoSerializer,
     ItemSerializer,
@@ -23,24 +24,34 @@ from .serializers import (
 )
 from .filters import ItemFilter, FornecedorFilter, TransacaoFilter, EntradaFilter, SaidaFilter, UsuarioFilter, UserFilter
 from .services import StockService, TransactionService, UserService
+from .currency_service import CurrencyService
 from .utils import camelize_dict_keys
 
 
-class TransacaoViewSet(viewsets.ModelViewSet):
+class StandardResultsSetPagination(PageNumberPagination):
+    """Classe de paginação padrão para todos os ViewSets."""
+    page_size = DEFAULT_PAGE_SIZE
+    page_size_query_param = 'page_size'
+    max_page_size = MAX_PAGE_SIZE
+
+
+class PaginatedViewSet(viewsets.ModelViewSet):
+    """ViewSet base com paginação padrão configurada."""
+    pagination_class = StandardResultsSetPagination
+    permission_classes = [IsAuthenticated]
+
+
+class TransacaoViewSet(PaginatedViewSet):
     """
     ViewSet para listar, criar, atualizar e remover Transações.
+    
+    Otimização: usa select_related para evitar queries N+1 ao acessar
+    cod_sku (Item) e cod_fornecedor (Fornecedor).
     """
-    queryset = Transacao.objects.all()
+    queryset = Transacao.objects.select_related('cod_sku', 'cod_fornecedor').all()
     serializer_class = TransacaoSerializer
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = TransacaoFilter
-
-    def get_queryset(self):
-        # Configure pagination size
-        self.pagination_class = PageNumberPagination
-        self.pagination_class.page_size = 10
-        return super().get_queryset()
     
     def create(self, request, *args, **kwargs):
         """
@@ -80,22 +91,17 @@ class TransacaoViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
 
-class ItemViewSet(viewsets.ModelViewSet):
+class ItemViewSet(PaginatedViewSet):
     """
     ViewSet para listar, criar, atualizar e remover Itens do estoque.
     """
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ItemFilter
     search_fields = ['cod_sku', 'descricao_item']
 
     def get_queryset(self):
-        # change pagination size
-        self.pagination_class = PageNumberPagination
-        self.pagination_class.page_size = 10
-
         queryset = super().get_queryset()
         
         # Filtros extras
@@ -147,8 +153,6 @@ class StockViewSet(viewsets.ViewSet):
         item_description = request.query_params.get('descricaoItem', '')
         show_only_stock_items = request.query_params.get('showOnlyStockItems') == 'true'
         show_only_active_items = request.query_params.get('showOnlyActiveItems') == 'true'
-        
-        # Get ordering parameters
         ordering = request.query_params.get('ordering', '')
         
         # Parse date
@@ -163,56 +167,15 @@ class StockViewSet(viewsets.ViewSet):
         else:
             stock_date = datetime.now().date()
         
-        # Use service to get stock items
+        # Use service to get stock items (ordenação incluída)
         result_items = StockService.get_stock_items(
             stock_date=stock_date,
             sku_filter=item_sku,
             description_filter=item_description,
             show_only_stock_items=show_only_stock_items,
-            show_only_active_items=show_only_active_items
+            show_only_active_items=show_only_active_items,
+            ordering=ordering
         )
-        
-        # Apply ordering if specified
-        if ordering:
-            # Sort the results using camelCase field names directly
-            def sort_key(item):
-                key_values = []
-                for field in ordering.split(','):
-                    field = field.strip()
-                    if field.startswith('-'):
-                        # Descending order
-                        field_name = field[1:]
-                        if field_name == 'codSku':
-                            key_values.append(item.get('codSku', ''))
-                        elif field_name == 'descricaoItem':
-                            key_values.append(item.get('descricaoItem', ''))
-                        elif field_name == 'unidMedida':
-                            key_values.append(item.get('unidMedida', ''))
-                        elif field_name == 'active':
-                            key_values.append(item.get('active', False))
-                        elif field_name == 'quantity':
-                            key_values.append(item.get('quantity', 0))
-                        elif field_name == 'estimatedConsumptionTime':
-                            key_values.append(item.get('estimatedConsumptionTime', ''))
-                    else:
-                        # Ascending order
-                        if field == 'codSku':
-                            key_values.append(item.get('codSku', ''))
-                        elif field == 'descricaoItem':
-                            key_values.append(item.get('descricaoItem', ''))
-                        elif field == 'unidMedida':
-                            key_values.append(item.get('unidMedida', ''))
-                        elif field == 'active':
-                            key_values.append(item.get('active', False))
-                        elif field == 'quantity':
-                            key_values.append(item.get('quantity', 0))
-                        elif field == 'estimatedConsumptionTime':
-                            key_values.append(item.get('estimatedConsumptionTime', ''))
-                return key_values
-            
-            # Determine if we need reverse sorting based on the first field
-            reverse_sort = ordering.split(',')[0].strip().startswith('-') if ordering else False
-            result_items.sort(key=sort_key, reverse=reverse_sort)
         
         # Apply pagination
         page_size = int(request.query_params.get('page_size', 10))
@@ -239,38 +202,40 @@ class StockViewSet(viewsets.ViewSet):
         })
 
 
-class EntradaViewSet(viewsets.ModelViewSet):
+class EntradaViewSet(PaginatedViewSet):
     """
     ViewSet para gerenciar as entradas de produtos no estoque.
+    
+    Otimização: usa select_related para carregar transacao, usuario,
+    e os relacionamentos da transacao (item e fornecedor) em uma única query.
     """
-    queryset = Entrada.objects.all()
+    queryset = Entrada.objects.select_related(
+        'transacao',
+        'transacao__cod_sku',
+        'transacao__cod_fornecedor',
+        'mat_usuario'
+    ).all()
     serializer_class = EntradaSerializer
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = EntradaFilter
 
-    def get_queryset(self):
-        # Configure pagination size
-        self.pagination_class = PageNumberPagination
-        self.pagination_class.page_size = 10
-        return super().get_queryset()
 
-
-class SaidaViewSet(viewsets.ModelViewSet):
+class SaidaViewSet(PaginatedViewSet):
     """
     ViewSet para gerenciar as saídas (pedidos) do estoque.
+    
+    Otimização: usa select_related para carregar transacao, usuario,
+    e os relacionamentos da transacao (item e fornecedor) em uma única query.
     """
-    queryset = Saida.objects.all()
+    queryset = Saida.objects.select_related(
+        'transacao',
+        'transacao__cod_sku',
+        'transacao__cod_fornecedor',
+        'mat_usuario'
+    ).all()
     serializer_class = SaidaSerializer
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = SaidaFilter
-
-    def get_queryset(self):
-        # Configure pagination size
-        self.pagination_class = PageNumberPagination
-        self.pagination_class.page_size = 10
-        return super().get_queryset()
     
     def create(self, request, *args, **kwargs):
         """
@@ -307,44 +272,32 @@ class SaidaViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class FornecedorViewSet(viewsets.ModelViewSet):
+class FornecedorViewSet(PaginatedViewSet):
     """
     ViewSet para cadastrar e gerenciar os fornecedores.
     """
     queryset = Fornecedor.objects.all()
     serializer_class = FornecedorSerializer
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = FornecedorFilter
 
-    def get_queryset(self):
-        # Configure pagination size
-        self.pagination_class = PageNumberPagination
-        self.pagination_class.page_size = 10
-        return super().get_queryset()
 
-
-class UsuarioViewSet(viewsets.ModelViewSet):
+class UsuarioViewSet(PaginatedViewSet):
     """
     ViewSet para gerenciar os usuários do sistema.
     """
     serializer_class = UsuarioSerializer
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = UsuarioFilter
     
     def get_queryset(self):
-        # Configure pagination size
-        self.pagination_class = PageNumberPagination
-        self.pagination_class.page_size = 10
         return Usuario.objects.all().select_related('auth_user')
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(PaginatedViewSet):
     """
     ViewSet para gerenciar usuários do sistema usando o modelo User do Django.
     """
-    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = UserFilter
     
@@ -356,9 +309,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserDetailSerializer
     
     def get_queryset(self):
-        # Configure pagination size
-        self.pagination_class = PageNumberPagination
-        self.pagination_class.page_size = 10
         return User.objects.all().prefetch_related('inventory_user')
 
 
@@ -421,6 +371,30 @@ def unified_transactions(request):
     nota_fiscal = request.query_params.get('notaFiscal', None)
     sku = request.query_params.get('sku', None)
     description = request.query_params.get('description', None)
+    show_in_usd = request.query_params.get('showInUSD', '') == 'true'
+    ordering = request.query_params.get('ordering', '-cronology')
+    
+    # Get pagination parameters
+    page = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('page_size', 10))
+    
+    # Get USD conversion rate if needed
+    usd_rate = None
+    if show_in_usd:
+        # Use date_from as reference date, or today if not provided
+        reference_date = None
+        if date_from:
+            try:
+                reference_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        usd_rate = CurrencyService.get_usd_rate(reference_date)
+        if usd_rate is None:
+            return Response(
+                {"error": "Não foi possível obter a cotação do dólar para a data especificada"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
     
     # Use service to get unified transactions
     result = TransactionService.get_unified_transactions(
@@ -428,10 +402,58 @@ def unified_transactions(request):
         date_to=date_to,
         nota_fiscal=nota_fiscal,
         sku=sku,
-        description=description
+        description=description,
+        show_in_usd=show_in_usd,
+        usd_rate=usd_rate
     )
     
-    return Response({'results': result})
+    # Apply ordering
+    if ordering:
+        # Convert ordering to work with our unified format
+        if ordering.startswith('-'):
+            reverse = True
+            field = ordering[1:]
+        else:
+            reverse = False
+            field = ordering
+            
+        # Map ordering fields
+        if field == 'cronology':
+            result.sort(key=lambda x: x['idTransacao'], reverse=reverse)
+        elif field == 'date':
+            result.sort(key=lambda x: x['date'], reverse=reverse)
+        elif field == 'time':
+            result.sort(key=lambda x: x['time'], reverse=reverse)
+        elif field == 'sku':
+            result.sort(key=lambda x: x['sku'], reverse=reverse)
+        elif field == 'description':
+            result.sort(key=lambda x: x['description'], reverse=reverse)
+        elif field == 'quantity':
+            result.sort(key=lambda x: x['quantity'], reverse=reverse)
+        elif field == 'totalCost' or field == 'cost':
+            result.sort(key=lambda x: x['totalCost'], reverse=reverse)
+        elif field == 'notaFiscal':
+            result.sort(key=lambda x: x.get('notaFiscal', ''), reverse=reverse)
+        elif field == 'username':
+            result.sort(key=lambda x: x.get('username', ''), reverse=reverse)
+        elif field == 'transactionType':
+            result.sort(key=lambda x: x['transactionType'], reverse=reverse)
+    
+    # Apply pagination
+    total_count = len(result)
+    start_index = (page - 1) * page_size
+    end_index = start_index + page_size
+    paginated_results = result[start_index:end_index]
+    
+    # Calculate pagination info
+    total_pages = (total_count + page_size - 1) // page_size
+    
+    return Response({
+        'results': paginated_results,
+        'count': total_count,
+        'next': page < total_pages,
+        'previous': page > 1
+    })
 
 
 @api_view(['POST'])

@@ -10,3 +10,10 @@
 <script setup lang="ts">
 import UsersList from '@/components/UsersList.vue';
 </script>
+
+<style scoped>
+.users-view {
+  width: 90%;
+  margin-left: 6%;
+}
+</style>

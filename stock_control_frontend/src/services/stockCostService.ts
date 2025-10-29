@@ -10,6 +10,7 @@ export interface StockCost {
   totalCost: number
   active: boolean
   lastEntryCost: number
+  currency?: string
 }
 
 export const stockCostService = {
@@ -21,6 +22,7 @@ export const stockCostService = {
       description?: string; 
       hasStock?: boolean; 
       active?: boolean; 
+      showInUSD?: boolean;
       ordering?: string;
       page_size?: number;
     }
@@ -42,6 +44,9 @@ export const stockCostService = {
       }
       if (filters?.active !== undefined) {
         params.append('active', String(filters.active));
+      }
+      if (filters?.showInUSD !== undefined) {
+        params.append('showInUSD', String(filters.showInUSD));
       }
       if (filters?.ordering) {
         params.append('ordering', filters.ordering);

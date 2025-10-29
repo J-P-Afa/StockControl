@@ -101,7 +101,7 @@ const hasSuggestions = computed(() => {
 .welcome-message {
     margin-top: 1rem;
     font-size: 1.2rem;
-    color: #7e7e7e;
+    color: var(--color-gray-400);
 }
 
 .master-badge {
@@ -120,12 +120,13 @@ const hasSuggestions = computed(() => {
     font-weight: bold;
     margin-bottom: 1.5rem;
     text-align: center;
+    color: var(--color-white);
 }
 
 .suggestion-items {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
     max-width: 600px;
     margin: 0 auto;
 }
@@ -136,7 +137,7 @@ const hasSuggestions = computed(() => {
     align-items: center;
     width: 100%;
     height: 50px;
-    background-color: #f8f9fa;
+    /*background-color: #f8f9fa;*/
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     text-decoration: none;
@@ -154,14 +155,14 @@ const hasSuggestions = computed(() => {
     align-items: center;
     width: 100%;
     height: 100%;
-    background-color: transparent;
+    background-color: var(--color-primary);
     border: none;
-    cursor: grab;
-    color: #333;
+    cursor: pointer;
+    color: var(--color-white);
 }
 
 .suggestion-item-button:hover {
-    background-color: #e9ecef;
+    /*background-color: #e9ecef;*/
     border-radius: 8px;
 }
 
@@ -173,8 +174,7 @@ const hasSuggestions = computed(() => {
 .no-suggestions {
     text-align: center;
     padding: 2rem;
-    background-color: #f8f9fa;
     border-radius: 8px;
-    color: #6c757d;
+    color: var(--color-gray-400);
 }
 </style>

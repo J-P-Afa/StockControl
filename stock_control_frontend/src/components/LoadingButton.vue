@@ -1,6 +1,7 @@
 <!-- LoadingButton.vue - Botão com estado de carregamento -->
 <template>
   <button
+    :type="type"
     :class="[
       'loading-button',
       `loading-button--${variant}`,
@@ -32,6 +33,7 @@ interface Props {
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'warning';
   size?: 'small' | 'medium' | 'large';
+  type?: 'button' | 'submit' | 'reset';
 }
 
 interface Emits {
@@ -43,6 +45,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   variant: 'primary',
   size: 'medium',
+  type: 'button',
 });
 
 const emit = defineEmits<Emits>();
